@@ -1,0 +1,53 @@
+---
+- name: Add MongoDB key
+  become: yes
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com:80
+    id: E162F504A20CDF15827F718D4B7C549A058F8B6B
+
+- name: Add MongoDB repository
+  become: yes
+  apt_repository:
+    repo: deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse
+    state: present
+
+- name: Install mongodb
+  become: yes
+  apt:
+    update_cache: yes
+    name: mongodb-org
+    state: present
+
+- name: Change mongo data directory permissions
+  become: yes
+  file:
+    path: /mongodata
+    recurse: yes
+    owner: mongodb
+    group: mongodb
+    mode: '0775'
+
+- name: Create systemd service file
+  become: yes
+  template:
+    src: mongod.service
+    dest: /lib/systemd/system/mongod.service
+
+- name: Enable Mongod service
+  become: yes
+  command: "{{ item }}"
+  with_items:
+    - systemctl --system daemon-reload
+    - systemctl enable mongod.service
+
+- name: Copy MongoDB configuration file
+  become: yes
+  template:
+    src: mongod.conf
+    dest: /etc/mongod.conf
+
+- name: Restart mongodb
+  become: yes
+  service:
+    name: mongod
+    state: restarted
