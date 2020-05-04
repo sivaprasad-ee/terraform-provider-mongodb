@@ -18,6 +18,15 @@
     name: mongodb-org
     state: present
 
+- name: Create Mongo Directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /mongodata/var/lib/mongodb/
+    - /mongodata/var/log/mongodb/
+
 - name: Change mongo data directory permissions
   become: yes
   file:

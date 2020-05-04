@@ -1,10 +1,10 @@
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
   profile = "terraform-provisioner-ansible"
 }
 
 variable "env" {
-  type = string
+  type        = string
   description = "Environment type"
   default     = "terraform-mongo-test"
 }
@@ -21,6 +21,7 @@ module "mongodb" {
   cidr_subnet       = "10.1.0.0/24"
   availability_zone = "us-east-1a"
   instance_type     = "t2.micro"
+  ami_filter_name   = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
   volume_size       = "10"
   private_key       = file("${path.module}/keys/id_rsa")
   public_key        = aws_key_pair.mongo_keypair.key_name
