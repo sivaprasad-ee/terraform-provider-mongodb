@@ -87,3 +87,13 @@ terraform apply
 cd terraform-provider-mongodb/examples/standalone-mongodb-ec2
 terraform destroy
 ```
+
+## Testing
+
+1. Install Go https://golang.org/doc/install
+2. Configure AWS Credentials as environment variables as mentioned above.
+
+```shell script
+cd terraform-provider-mongodb/test
+go test -v
+```
