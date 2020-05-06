@@ -7,16 +7,19 @@ data "aws_vpc" "default" {
   default = true
 }
 
-data "aws_subnet_ids" "all_subnets" {
+data "aws_subnet" "subnet" {
   vpc_id = data.aws_vpc.default.id
+  availability_zone = "us-east-1a"
 }
 
 module "mongodb" {
   source = "../../"
   vpc_id = data.aws_vpc.default.id
-  subnet_id = tolist(data.aws_subnet_ids.all_subnets.ids)[0]
+  subnet_id = data.aws_subnet.subnet.id
   instance_type     = "t2.micro"
   ami_filter_name   = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
+  ebs_volume_id     = "vol-082d1c54d021cca85"
+  availability_zone = "us-east-1a"
   volume_size       = "8"
   private_key       = file("~/.ssh/id_rsa")
   public_key        = file("~/.ssh/id_rsa.pub")

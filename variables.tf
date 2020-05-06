@@ -26,10 +26,20 @@ variable "ami_filter_name" {
   default     = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
 }
 
+variable "ebs_volume_id" {
+  type        = string
+  description = "Id of the EBS volume."
+}
+
+variable "availability_zone" {
+  type        = string
+  description = "Availability zone"
+}
+
 variable "volume_size" {
   type        = string
   description = "Size of the DB storage volume."
-  default     = "100"
+  default     = "10"
 }
 
 variable "environment_tag" {

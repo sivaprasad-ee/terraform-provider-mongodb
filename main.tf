@@ -68,13 +68,7 @@ resource "aws_instance" "mongo_server" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [aws_security_group.sg_mongodb.id]
   key_name               = aws_key_pair.mongo_keypair.key_name
-
-  root_block_device {
-    //device_name = "/dev/sda1"
-    volume_size = var.volume_size
-    volume_type = "gp2"
-    //delete_on_termination = false
-  }
+  availability_zone      = var.availability_zone
 
   tags = {
     Name = var.environment_tag
@@ -98,6 +92,33 @@ resource "aws_instance" "mongo_server" {
       "sudo ln -s /usr/bin/python3 /usr/bin/python",
       "chmod +x /tmp/wait-for-cloud-init.sh",
       "/tmp/wait-for-cloud-init.sh",
+    ]
+  }
+}
+
+resource "aws_volume_attachment" "mongo-data-vol-attachment" {
+  device_name = "/dev/xvdh"
+  volume_id = var.ebs_volume_id
+  instance_id = aws_instance.mongo_server.id
+
+  skip_destroy = true
+
+  connection {
+    host        = aws_instance.mongo_server.public_ip
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = var.private_key
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/provisioning/mount-data-volume.sh"
+    destination = "/tmp/mount-data-volume.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/mount-data-volume.sh",
+      "/tmp/mount-data-volume.sh",
     ]
   }
 
