@@ -25,7 +25,7 @@ data "aws_ami" "ami" {
 
 resource "aws_security_group" "sg_mongodb" {
   name   = "sg_mongodb"
-  vpc_id = aws_vpc.mongo_vpc.id
+  vpc_id = var.vpc_id
   ingress {
     from_port = 22
     to_port   = 22
@@ -56,17 +56,7 @@ resource "aws_security_group" "sg_mongodb" {
     Environment = var.environment_tag
   }
 }
-/*
-resource "tls_private_key" "keygen" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
 
-resource "aws_key_pair" "generated_keypair" {
-  key_name   = "generated_keypair"
-  public_key = tls_private_key.keygen.public_key_openssh
-}
-*/
 resource "aws_key_pair" "mongo_keypair" {
   key_name   = "mongo-publicKey"
   public_key = var.public_key
@@ -75,10 +65,9 @@ resource "aws_key_pair" "mongo_keypair" {
 resource "aws_instance" "mongo_server" {
   ami                    = var.ami_id == "" ? data.aws_ami.ami.id : var.ami_id
   instance_type          = var.instance_type
-  subnet_id              = aws_subnet.subnet_public.id
+  subnet_id              = var.subnet_id
   vpc_security_group_ids = [aws_security_group.sg_mongodb.id]
   key_name               = aws_key_pair.mongo_keypair.key_name
-  //key_name               = aws_key_pair.generated_keypair.key_name
 
   root_block_device {
     //device_name = "/dev/sda1"
@@ -97,7 +86,6 @@ resource "aws_instance" "mongo_server" {
     type        = "ssh"
     user        = "ubuntu"
     private_key = var.private_key
-    //private_key = tls_private_key.keygen.private_key_pem
   }
 
   provisioner "file" {

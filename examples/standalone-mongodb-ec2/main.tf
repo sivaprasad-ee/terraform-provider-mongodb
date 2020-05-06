@@ -3,12 +3,18 @@ provider "aws" {
   profile = "terraform-provisioner-ansible"
 }
 
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_subnet_ids" "all_subnets" {
+  vpc_id = data.aws_vpc.default.id
+}
+
 module "mongodb" {
   source = "../../"
-
-  cidr_vpc          = "10.1.0.0/16"
-  cidr_subnet       = "10.1.0.0/24"
-  availability_zone = "us-east-1a"
+  vpc_id = data.aws_vpc.default.id
+  subnet_id = tolist(data.aws_subnet_ids.all_subnets.ids)[0]
   instance_type     = "t2.micro"
   ami_filter_name   = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
   volume_size       = "8"
@@ -22,5 +28,5 @@ output "mongo_server_public_ip" {
 }
 
 output "mongo_connect_url" {
-  value = "mongo mongodb://${module.mongodb.mongo_server_public_ip}:27017"
+  value = module.mongodb.mongo_connect_url
 }

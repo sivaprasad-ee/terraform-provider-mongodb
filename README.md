@@ -1,15 +1,26 @@
 # Terraform MongoDB Provider for AWS
 
-This module provision MongoDB on AWS EC2 instance using Ansible provisioner.
-The module creates a new **vpc, internet_gateway, subnet, route_table, route_table_association, 
-security_group, ebs_volume** and **Ubuntu based EC2 instance**. 
+This module provision MongoDB server on AWS EC2 instance using Ansible provisioner.
+This module uses [undergreen.mongodb](https://galaxy.ansible.com/undergreen/mongodb) Ansible role to provision mongodb.
+So, you can use any of the [platforms supported by **undergreen.mongodb**](https://github.com/UnderGreen/ansible-role-mongodb/blob/master/README.md) role while selecting the AMI ID.
 
 ## Dependencies
+
+### 1. Ansible provisioner
 This module depends on the Ansible provisioner. 
-See their [installation instructions](https://github.com/radekg/terraform-provisioner-ansible#installation).
+See the [installation instructions](https://github.com/radekg/terraform-provisioner-ansible#installation).
 
 Download a [Prebuilt release available on GitHub](https://github.com/radekg/terraform-provisioner-ansible/releases),
 rename it to **terraform-provisioner-ansible** and place it in **~/.terraform.d/plugins** directory.
+
+### 2. SSH Keys
+User needs to provide SSH keys for the **terraform-provider-mongodb** module to perform remote provisioning.
+
+You can generate SSH keys using the following command:
+
+`$ ssh-keygen -t rsa -b 4096 -C "your_email@example.com"`
+
+For more info on generating SSH keys refer https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
 
 ## Example:
 
@@ -21,22 +32,35 @@ provider "aws" {
   profile = "terraform-provisioner-ansible"
 }
 
-module "mongodb" {
-  source = "../../"
-
-  cidr_vpc          = "10.1.0.0/16"
-  cidr_subnet       = "10.1.0.0/24"
-  availability_zone = "us-east-1a"
-  instance_type     = "t2.micro"
-  volume_size       = "10"
-  private_key       = file("${path.module}/keys/id_rsa")
-  public_key        = aws_key_pair.mongo_keypair.key_name
-  environment_tag   = "production"
+data "aws_vpc" "default" {
+  default = true
 }
 
-resource "aws_key_pair" "mongo_keypair" {
-  key_name   = "mongo-publicKey"
-  public_key = file("${path.module}/keys/id_rsa.pub")
+data "aws_subnet_ids" "all_subnets" {
+  vpc_id = data.aws_vpc.default.id
+}
+
+module "mongodb" {
+  //public use
+  //source          = "https://github.com/everest-engineering/terraform-provider-mongodb"
+  
+  source            = "../../"
+  vpc_id            = data.aws_vpc.default.id
+  subnet_id         = tolist(data.aws_subnet_ids.all_subnets.ids)[0]
+  instance_type     = "t2.micro"
+  ami_filter_name   = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
+  volume_size       = "8"
+  private_key       = file("~/.ssh/id_rsa")
+  public_key        = file("~/.ssh/id_rsa.pub")
+  environment_tag   = "terraform-mongo-test"
+}
+
+output "mongo_server_public_ip" {
+  value = module.mongodb.mongo_server_public_ip
+}
+
+output "mongo_connect_url" {
+  value = module.mongodb.mongo_connect_url
 }
 ```
 

@@ -1,16 +1,11 @@
-variable "cidr_vpc" {
+variable "vpc_id" {
   type        = string
-  description = "CIDR block for the VPC"
+  description = "VPC Id"
 }
 
-variable "cidr_subnet" {
+variable "subnet_id" {
   type        = string
-  description = "CIDR block for the subnet"
-}
-
-variable "availability_zone" {
-  type        = string
-  description = "Availability zone to create subnet"
+  description = "Subnet Id"
 }
 
 variable "instance_type" {
